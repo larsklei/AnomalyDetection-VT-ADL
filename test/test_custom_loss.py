@@ -1,10 +1,12 @@
-import unittest
+import pytest
+import numpy as np
+
+from scoring.custom_loss import StructuralSimilarityIndex, VisionLoss
 
 
-class MyTestCase(unittest.TestCase):
-	def test_something(self):
-		self.assertEqual(True, False)  # add assertion here
+class TestStructuralSimilarityIndex:
+	raise NotImplemented
 
 
-if __name__ == '__main__':
-	unittest.main()
+class TestVisionLoss:
+	raise NotImplemented
