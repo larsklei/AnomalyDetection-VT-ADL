@@ -10,7 +10,7 @@ def iou_score(y_mask_pred, y_mask_true):
 		y_mask_pred (): The mask of the predicted image.
 		y_mask_true (): The ground truth.
 
-	return:
+	Returns:
 		iou_score (float): The intersection over union score.
 	"""
 	if y_mask_pred.shape == y_mask_true.shape:
