@@ -16,9 +16,15 @@ class PatchEmbedding(keras.layers.Layer):
 		img_width: int
 			The width of the input images.
 	"""
-
-	def __init__(self, latent_dim: int, patch_size: int, img_height: int, img_width: int, name=None) -> object:
-		super().__init__()
+	def __init__(
+			self,
+			latent_dim: int,
+			patch_size: int,
+			img_height: int,
+			img_width: int,
+			name: str | None = None
+	):
+		super().__init__(name=name)
 		self.latent_dim = latent_dim
 
 		if not isinstance(patch_size, (list, tuple)):
@@ -52,7 +58,12 @@ class PatchEmbedding(keras.layers.Layer):
 
 
 class VisionTransformerMLP(keras.layers.Layer):
-	def __init__(self, hidden_units: int, num_outputs: int, dropout: float = 0.5) -> object:
+	def __init__(
+			self,
+			hidden_units: int,
+			num_outputs: int,
+			dropout: float = 0.5
+	):
 		super().__init__()
 		self.hidden_units = hidden_units
 		self.num_outputs = num_outputs
@@ -64,8 +75,7 @@ class VisionTransformerMLP(keras.layers.Layer):
 			keras.layers.Dense(units=self.num_outputs, activation='gelu'),
 			keras.layers.Dropout(rate=self.dropout)
 		]
-
-
+		
 	def call(self, inputs):
 		x = inputs
 
@@ -79,19 +89,21 @@ class VisionTransformerEncoder(keras.layers.Layer):
 	"""
 
 	Args:
-		num_heads: int
-			Number of heads for the MultiHeadAttention Layer
-		key_dim: int
-
-		hidden_units: int
-			Number of hidden units in the MLP layer.
-		num_output: int
-
-
+		num_heads:
+		key_dim:
+		hidden_units:
+		num_outputs:
+		name:
 	"""
-
-	def __init__(self, num_heads, key_dim, hidden_units, num_outputs):
-		super().__init__()
+	def __init__(
+			self,
+			num_heads: int,
+			key_dim: int,
+			hidden_units: int,
+			num_outputs: int,
+			name: str | None = None
+	):
+		super().__init__(name=name)
 		self.num_heads = num_heads
 		self.key_dim = key_dim
 		self.hidden_units = hidden_units
@@ -112,19 +124,28 @@ class VisionTransformerEncoder(keras.layers.Layer):
 		
 		return encoded_inputs
 	
-def get_decoder():
-	decoder = []
+def get_decoder(activation='gelu', kernel_initializer='glorot_uniform'):
+	"""
+	
+	Args:
+		activation:
+
+	Returns:
+
+	"""
+	decoder = keras.Sequential(name='Decoder')
 	
 	for i in range(4):
-		decoder.append(keras.layers.BatchNormalization())
-		decoder.append(keras.layers.Conv2DTranspose(
+		decoder.add(keras.layers.Conv2DTranspose(
 			filters=int(2**(3-i)+2),
 			kernel_size=2,
 			strides=2,
 			padding='valid',
-			activation='gelu'
+			activation=activation,
+			kernel_initializer=kernel_initializer
 		))
+		decoder.add(keras.layers.BatchNormalization())
 		
-	return keras.Sequential(decoder, name='Decoder')
+	return decoder
 	
 	
