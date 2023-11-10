@@ -2,7 +2,7 @@ import tensorflow as tf
 import keras_core as keras
 
 from custom_model.visiontransformer_layers import PatchEmbedding, VisionTransformerEncoder, get_decoder
-from scoring.custom_loss import VisionLoss
+from common.model_utilities.loss_metric_utilities import VisionLoss
 
 class VisionTransformerAutoencoder(keras.Model):
 	"""
