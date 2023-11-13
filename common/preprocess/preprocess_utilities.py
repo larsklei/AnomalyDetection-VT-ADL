@@ -1,10 +1,12 @@
 import tensorflow as tf
 import keras_core as keras
+import random
 
 from pathlib import Path
-from typing import Mapping, Any, Union, Optional
+from sklearn.model_selection import train_test_split
 
-NAME_OBJECTS = {
+
+OBJECT_NAMES = {
 	'bottle',
 	'cable',
 	'capsule',
@@ -22,19 +24,19 @@ NAME_OBJECTS = {
 	'zipper'
 }
 
+IMG_HEIGHT = 512
+IMG_WIDTH = 512
+CHANNELS = 3
+
 def load_image(image_file):
-	image = tf.io.read_file(image_file)
-	image = tf.io.decode_png(image)
+	image = keras.utils.load_img(image_file)
+	image_arr = keras.utils.img_to_array(image)
+	image_arr = tf.cast(image_arr, dtype=tf.float32)
 	
-	image = tf.cast(image, tf.float32)
-	
-	return image
+	return image_arr
 
-def resize(image, height=512, width=512):
+def resize(image, height=IMG_HEIGHT, width=IMG_WIDTH):
 	return tf.image.resize(image, [height, width], method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
-
-def crop_image(image):
-	pass
 
 def normalize(image):
 	return image / 255.0
@@ -42,38 +44,86 @@ def normalize(image):
 def image_preprocess(image_file):
 	image = load_image(image_file)
 	image = resize(image)
-	image = crop_image(image)
 	image = normalize(image)
-	
 	return image
-
-def get_ground_truth(image_file: Path, height=512, width=512):
-	parts = list(file_path.parts)
-	if parts[-2] == "good":
-		ground_truth = tf.zeros(shape=(height, width, 3))
+	
+def get_ground_truth_image(image_file, height=IMG_HEIGHT, width=IMG_WIDTH, channels=CHANNELS):
+	path_parts = list(image_file.parts)
+	if path_parts[-2] == "good":
+		gt_image = tf.zeros((height, width, channels))
 	else:
-		parts[-3] = "ground_truth"
-		ground_truth_path = Path(parts[0],*parts[1:])
-		ground_truth = image_preprocess(ground_truth_path)
+		path_parts[-3] = "ground_truth"
+		gt_path = Path(path_parts[0], path_parts[1:])
+		gt_image = image_preprocess(gt_path)
 	
-	return ground_truth
+	return gt_image
 
-def eval_data_pipeline(image_file):
-	original_image = image_preprocess(image_file)
-	ground_truth = get_ground_truth(image_file)
+def get_image_files(
+		source_path,
+		data_objects = None,
+		training = True
+):
+	"""Returns the paths to the images of the objects in data objects.
 	
-	return original_image, ground_truth
+	Args:
+		source_path: Path to the MVTEC AD dataset directory.
+		data_objects: A str, list of strings or none
+		training: Boolean if a training dataset is generated.
+
+	Returns:
+		A list of image file paths.
+	"""
+	if data_objects is None:
+		data_objects = list(OBJECT_NAMES)
+	if isinstance(data_objects, str):
+		data_objects = [data_objects]
+	if not set(data_objects).issubset(OBJECT_NAMES):
+		raise ValueError("The argument data_objects contains strings which are not part of the mvtac objects.")
+	source_path = Path(source_path)
+	if training:
+		stem_paths = [f"{data_object}/train/*/*.png" for data_object in data_objects]
+	else:
+		stem_paths = [f"{data_object}/test/*/*.png" for data_object in data_objects]
+	image_files = []
+	for stem_path in stem_paths:
+		image_files += list(source_path.glob(stem_path))
 		
+	return image_files
+	
+class DataGenerator:
+	def __init__(self, image_files, training=False):
+		"""Returns a set of images with their ground truth images.
+		
+		Args:
+			image_files: Image file paths.
+			training: Boolean to determine if training dataset is being created.
+		"""
+		self.image_files = image_files
+		self.training = training
+	
+	def __call__(self):
+		if self.training:
+			random.shuffle(self.image_files)
+		
+		for image_file in self.image_files:
+			image = image_preprocess(image_file)
+			ground_truth = get_ground_truth_image(image_file)
+			
+			yield image, ground_truth
+			
+def get_train_val_split(image_files, validation_split=0.2):
+	"""Creates training and validation split for the image files.
+	
+	Args:
+		image_files: Image file paths.
+		validation_split: Float for the size of the validation split
 
-if __name__ == "__main__":
-	path = Path("/Users/larskleinemeier/Documents/AnomalyDetection-VT-ADL/data_images/bottle/test/broken_large/000.png")
+	Returns:
+		Two DataGenerators for the training files and talidation files.
+	"""
+	train_files, val_files = train_test_split(image_files, test_size=validation_split)
 	
-	parts = list(path.parts)
-	parts[-3] = "ground_truth"
+	train_dg = DataGenerator(train_files, training=True)
+	val_dg = DataGenerator(val_files, training=False)
 	
-	path2 = Path(parts[0], *parts[1:])
-	print(str(path))
-	print(str(path2))
-	
-	
-	
+	return train_dg, val_dg
