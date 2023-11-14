@@ -48,6 +48,18 @@ def image_preprocess(image_file):
 	return image
 	
 def get_ground_truth_image(image_file, height=IMG_HEIGHT, width=IMG_WIDTH, channels=CHANNELS):
+	"""Returns the ground image associated to the image file. If image file has defect "good" or is part of the
+	training set, a zero tensor of the shape (height, width, channels) will be returned.
+	
+	Args:
+		image_file: Path to the image file
+		height: Height of the image
+		width: Width of the image
+		channels: Number of channels of the image.
+
+	Returns:
+
+	"""
 	path_parts = list(image_file.parts)
 	if path_parts[-2] == "good":
 		gt_image = tf.zeros((height, width, channels))
@@ -123,7 +135,4 @@ def get_train_val_split(image_files, validation_split=0.2):
 	"""
 	train_files, val_files = train_test_split(image_files, test_size=validation_split)
 	
-	train_dg = DataGenerator(train_files, training=True)
-	val_dg = DataGenerator(val_files, training=False)
-	
-	return train_dg, val_dg
+	return train_files, val_files
