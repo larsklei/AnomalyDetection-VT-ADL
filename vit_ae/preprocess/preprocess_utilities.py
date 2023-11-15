@@ -60,12 +60,14 @@ def get_ground_truth_image(image_file, height=IMG_HEIGHT, width=IMG_WIDTH, chann
 	Returns:
 
 	"""
+	stem = image_file.stem
 	path_parts = list(image_file.parts)
 	if path_parts[-2] == "good":
 		gt_image = tf.zeros((height, width, channels))
 	else:
+		path_parts[-1] = stem+"_mask.png"
 		path_parts[-3] = "ground_truth"
-		gt_path = Path(path_parts[0], path_parts[1:])
+		gt_path = Path(path_parts[0], *path_parts[1:])
 		gt_image = image_preprocess(gt_path)
 	
 	return gt_image

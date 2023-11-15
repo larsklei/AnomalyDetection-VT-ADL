@@ -1,9 +1,10 @@
 import tensorflow as tf
 import keras_core as keras
+import numpy as np
 
 from tensorflow.keras.losses import MeanSquaredError, Loss
 from tensorflow.image import ssim
-
+from skimage.metrics import structural_similarity as sk_ssim
 
 @keras.saving.register_keras_serializable()
 class StructuralSimilarityIndexMeasure(keras.losses.Loss):
@@ -53,8 +54,22 @@ class VisionLoss(keras.losses.Loss):
 			"lambda2": self.lambda2,
 			"name": self.name
 		}
-	
 
-@keras.saving.register_keras_serializable()
-class IntersectionOverUnion(keras.metrics.Metric)
-	def __init__(self, name="intersection_over_union"):
+
+def get_ground_truth_predictions(y_true, y_pred, threshold):
+	y_true_np = np.squeeze(y_true.numpy())
+	y_pred_np = np.squeeze(y_pred.numpy())
+	_, ssim_residual_mask = sk_ssim(
+		y_true_np,
+		y_pred_np,
+		data_range=1,
+		channel_axis=-1,
+		gaussian_weights=True,
+		full=True,
+		use_sample_covariance=False,
+		sigma=1.5
+	)
+	gt_pred = np.zeros(shape=ssim_residual_mask.shape)
+	gt_pred[(1 - ssim_residual_mask) > threshold] = 1
+	gt_pred = tf.convert_to_tensor(gt_pred, dtype=tf.float32)
+	return gt_pred
