@@ -17,7 +17,8 @@ class PatchEmbedding(keras.layers.Layer):
 			The width of the image file
 	
 	Attributes:
-		name: The name of the layer
+		name: str
+			The name of the layer
 	"""
 	def __init__(
 			self,
@@ -64,7 +65,7 @@ class PatchEmbedding(keras.layers.Layer):
 		config = super().get_config()
 		config.update(
 			{
-				"proj_dim": self.embed_dim,
+				"embed_dim": self.embed_dim,
 				"patch_size": self.patch_size,
 				"img_height": self.img_height,
 				"img_width": self.img_width
@@ -83,9 +84,7 @@ class VisionTransformerBlock(keras.layers.Layer):
 		num_heads: int
 			The number of heads used in MultiHeadAttention
 		hidden_unit: int
-			The number of hidden units in
-		num_outputs: int
-			The output of the block.
+			The number of hidden units in MLP block
 		
 	Attributes:
 		rate: float
@@ -163,3 +162,8 @@ def get_decoder(activation='gelu', kernel_initializer='glorot_uniform'):
 		decoder.add(keras.layers.BatchNormalization())
 		
 	return decoder
+
+if __name__ == "__main__":
+	patch = PatchEmbedding(128, 16, 256, 256)
+	
+	print(len(patch._layers))
