@@ -6,16 +6,45 @@ from tensorflow.keras.losses import MeanSquaredError, Loss
 from tensorflow.image import ssim
 from skimage.metrics import structural_similarity as sk_ssim
 
+def gaussian_filter(filter_size: int, sigma: float):
+	"""Returns a Gaussian filter of filter size and variance sigma.
+	
+	Args:
+		filter_size: int
+			The size of the filter.
+		sigma: float
+			The variance for the filter. It has to be positive (>0).
+
+	Returns:
+		A tensor of the shape (filter_size, filter_size) with values defined by the Gaussian filter.
+
+	"""
+	filter_size = keras.ops.convert_to_tensor(filter_size, dtype=tf.int32)
+	sigma = keras.ops.convert_to_tensor(sigma, dtype=tf.float32)
+	
+	if sigma <= 0:
+		raise ValueError("The variance sigma has to be positive.")
+	
+	filter = keras.ops.arange(filter_size, dtype=sigma.dtype)
+	filter = keras.ops.square(filter)
+	filter *= -0.5 / keras.ops.square(sigma)
+	
+	filter = keras.ops.reshape(filter, new_shape=[1, -1]) + keras.ops.reshape(filter, new_shape=[-1, 1])
+	filter = keras.ops.reshape(filter, new_shape=[1, -1])
+	
+	filter = keras.ops.softmax(filter)
+	
+	return keras.ops.reshape(filter, new_shape=[filter_size, filter_size])
+
 @keras.saving.register_keras_serializable()
 class StructuralSimilarityIndexMeasure(keras.losses.Loss):
-	"""
-
+	"""Wrapper to use the tf.image function as a loss function.
+	
 	Args:
 		max_val:
 		name: str
 			Name of the loss function.
 	"""
-	
 	def __init__(
 			self,
 			max_val: int = 1,
@@ -33,25 +62,34 @@ class StructuralSimilarityIndexMeasure(keras.losses.Loss):
 
 @keras.saving.register_keras_serializable()
 class VisionLoss(keras.losses.Loss):
+	"""A loss function which is the sum of the MSE and the SSIM loss.
+	
+	Attributes
+		lambda1: float
+			The weight of the MSE term.
+		lambda2: float
+			The weight of the SSIM term.
+		name:
+	"""
 	def __init__(
 			self,
-			lambda1: float = 5,
-			lambda2: float = 0.5,
+			lambda_mse: float = 5,
+			lambda_ssim: float = 0.5,
 			name: str = "CustomVisionLoss"
 	):
 		super().__init__(name=name)
-		self.lambda1 = lambda1
-		self.lambda2 = lambda2
+		self.lambda_mse = lambda_mse
+		self.lambda_ssim = lambda_ssim
 	
 	def call(self, y_true, y_pred):
 		mse = MeanSquaredError()
 		ssim = StructuralSimilarityIndexMeasure()
-		return self.lambda1 * mse(y_true, y_pred) + self.lambda2 * ssim(y_true, y_pred)
+		return self.lambda_mse * mse(y_true, y_pred) + self.lambda_ssim * ssim(y_true, y_pred)
 	
 	def get_config(self):
 		return {
-			"lambda1": self.lambda1,
-			"lambda2": self.lambda2,
+			"lambda_mse": self.lambda_mse,
+			"lambda_ssim": self.lambda_ssim,
 			"name": self.name
 		}
 

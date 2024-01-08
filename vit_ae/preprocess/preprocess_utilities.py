@@ -52,12 +52,17 @@ def get_ground_truth_image(image_file, height=IMG_HEIGHT, width=IMG_WIDTH, chann
 	training set, a zero tensor of the shape (height, width, channels) will be returned.
 	
 	Args:
-		image_file: Path to the image file
-		height: Height of the image
-		width: Width of the image
-		channels: Number of channels of the image.
+		image_file:
+			Path to the image file
+		height: int
+			Height of the image
+		width: int
+			Width of the image
+		channels: int
+			Number of channels of the image.
 
 	Returns:
+		gt_image: Array of floats.
 
 	"""
 	stem = image_file.stem
@@ -80,9 +85,12 @@ def get_image_files(
 	"""Returns the paths to the images of the objects in data objects.
 	
 	Args:
-		source_path: Path to the MVTEC AD dataset directory.
-		data_objects: A str, list of strings or none
-		training: Boolean if a training dataset is generated.
+		source_path:
+			Path to the MVTEC AD dataset directory.
+		data_objects: str | list of strings | None
+			A subset of the objects of the MVTEC AD dataset
+		training: boolean
+			A value to see if the training dataset is generated
 
 	Returns:
 		A list of image file paths.
@@ -129,11 +137,13 @@ def get_train_val_split(image_files, validation_split=0.2):
 	"""Creates training and validation split for the image files.
 	
 	Args:
-		image_files: Image file paths.
-		validation_split: Float for the size of the validation split
+		image_files:
+			Image file paths.
+		validation_split: float
+			The ratio of the validation split
 
 	Returns:
-		Two DataGenerators for the training files and talidation files.
+		Two DataGenerators for the training files and validation files.
 	"""
 	train_files, val_files = train_test_split(image_files, test_size=validation_split)
 	

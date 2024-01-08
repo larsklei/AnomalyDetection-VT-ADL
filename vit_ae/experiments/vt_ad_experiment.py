@@ -1,6 +1,9 @@
-import keras_core as keras
+import logging
+import os
 import tensorflow as tf
 import click
+import mlflow
+import keras_core as keras
 
 from vit_ae.train.train_utilities import create_optimizer, create_model
 from vit_ae.preprocess.preprocess_utilities import get_image_files, get_train_val_split, DataGenerator
@@ -102,7 +105,7 @@ def perform_train_run(source_path, data_objects, val_split, epochs, embed_dim, n
 			epochs=epochs,
 			steps_per_epoch=steps_per_epoch
 		)
-	
+	logging.info("Model is fitted on training set.")
 	test_image_files = get_image_files(source_path, data_objects, training=False)
 	training_steps = int(len(test_image_files) // batch_size + 1)
 	test_ds = tf.data.Dataset.from_generator(
@@ -110,7 +113,7 @@ def perform_train_run(source_path, data_objects, val_split, epochs, embed_dim, n
 		output_signature=output_signature
 	)
 	test_ds = test_ds.cache().prefetch(buffer_size=AUTOTUNE).repeat().batch(batch_size, drop_remainder=True)
-	score = model.evaluate(test_ds, return_dict=True, steps=training_steps)
+	score = model.evaluate(test_ds, steps=training_steps)
 	
 	print(score)
 

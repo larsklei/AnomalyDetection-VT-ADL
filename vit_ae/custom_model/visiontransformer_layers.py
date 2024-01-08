@@ -1,10 +1,24 @@
 import keras_core as keras
 import tensorflow as tf
-import numpy as np
 
 
 @keras.saving.register_keras_serializable()
 class PatchEmbedding(keras.layers.Layer):
+	"""A simple implementation of the patch embedding using an inner convolution layer as Keras layer object.
+
+	Args:
+		embed_dim: int
+			The dimension of the latent space.
+		patch_size: int | tuple | list
+			A integer or a tuple of integers to be the size of the patches
+		img_height: int
+			The height of the image file
+		img_width: int
+			The width of the image file
+	
+	Attributes:
+		name: The name of the layer
+	"""
 	def __init__(
 			self,
 			embed_dim: int,
@@ -14,16 +28,6 @@ class PatchEmbedding(keras.layers.Layer):
 			name: str | None = None,
 			**kwargs
 	):
-		"""
-		
-		Args:
-			embed_dim:
-			patch_size:
-			img_height:
-			img_width:
-			name:
-			**kwargs:
-		"""
 		super().__init__(name=name, **kwargs)
 		self.embed_dim = embed_dim
 
@@ -70,6 +74,26 @@ class PatchEmbedding(keras.layers.Layer):
 
 @keras.saving.register_keras_serializable()
 class VisionTransformerBlock(keras.layers.Layer):
+	"""A simple implementation of the standard VisionTransformer Encoder Block
+	architecture.
+
+	Args:
+		embed_dim: int
+			The key dimension in MultiHeadAttention
+		num_heads: int
+			The number of heads used in MultiHeadAttention
+		hidden_unit: int
+			The number of hidden units in
+		num_outputs: int
+			The output of the block.
+		
+	Attributes:
+		rate: float
+			The rate of the dropout layer in the MLP block.
+		name: str
+			The name of the block.
+	"""
+	
 	def __init__(
 			self,
 			embed_dim: int,
@@ -79,16 +103,6 @@ class VisionTransformerBlock(keras.layers.Layer):
 			name: str | None = None,
 			**kwargs
 	):
-		"""A simple implementation of the standard VisionTransformer Encoder Block
-		architecture.
-
-		Args:
-			embed_dim: int for the key dimension in MultiHeadAttention
-			num_heads: Int for the number of heads used in MultiHeadAttention
-			hidden_unit: A integer for the number of hidden units in
-			num_outputs:
-			name:
-		"""
 		super().__init__(name=name, **kwargs)
 		self.num_heads = num_heads
 		self.embed_dim = embed_dim
@@ -131,11 +145,9 @@ class VisionTransformerBlock(keras.layers.Layer):
 def get_decoder(activation='gelu', kernel_initializer='glorot_uniform'):
 	"""
 	
-	Args:
+	Attributes:
 		activation:
-
-	Returns:
-
+		kernel_initializer:
 	"""
 	decoder = keras.Sequential(name='Decoder')
 	
@@ -151,9 +163,3 @@ def get_decoder(activation='gelu', kernel_initializer='glorot_uniform'):
 		decoder.add(keras.layers.BatchNormalization())
 		
 	return decoder
-	
-if __name__ == "__main__":
-	x = np.random.random((3, 32, 3))
-	block = VisionTransformerBlock(embed_dim=3, num_heads=2, hidden_unit=32)
-	
-	y = block(x)
