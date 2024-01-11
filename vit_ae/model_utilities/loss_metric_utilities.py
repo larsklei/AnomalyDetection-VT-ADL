@@ -1,10 +1,9 @@
 import tensorflow as tf
-import keras_core as keras
-import numpy as np
+import keras
 
-from tensorflow.keras.losses import MeanSquaredError, Loss
+from keras.losses import MeanSquaredError
 from tensorflow.image import ssim
-from skimage.metrics import structural_similarity as sk_ssim
+
 
 def gaussian_filter(filter_size: int, sigma: float):
 	"""Returns a Gaussian filter of filter size and variance sigma.
@@ -25,16 +24,17 @@ def gaussian_filter(filter_size: int, sigma: float):
 	if sigma <= 0:
 		raise ValueError("The variance sigma has to be positive.")
 	
-	filter = keras.ops.arange(filter_size, dtype=sigma.dtype)
-	filter = keras.ops.square(filter)
-	filter *= -0.5 / keras.ops.square(sigma)
+	gauss_filter = keras.ops.arange(filter_size, dtype=sigma.dtype)
+	gauss_filter = keras.ops.square(gauss_filter)
+	gauss_filter *= -0.5 / keras.ops.square(sigma)
 	
-	filter = keras.ops.reshape(filter, new_shape=[1, -1]) + keras.ops.reshape(filter, new_shape=[-1, 1])
-	filter = keras.ops.reshape(filter, new_shape=[1, -1])
+	gauss_filter = keras.ops.reshape(gauss_filter, new_shape=[1, -1]) + keras.ops.reshape(gauss_filter, new_shape=[-1, 1])
+	gauss_filter = keras.ops.reshape(gauss_filter, new_shape=[1, -1])
 	
-	filter = keras.ops.softmax(filter)
+	gauss_filter = keras.ops.softmax(gauss_filter)
 	
-	return keras.ops.reshape(filter, new_shape=[filter_size, filter_size])
+	return keras.ops.reshape(gauss_filter, new_shape=[filter_size, filter_size])
+
 
 @keras.saving.register_keras_serializable()
 class StructuralSimilarityIndexMeasure(keras.losses.Loss):
@@ -45,6 +45,7 @@ class StructuralSimilarityIndexMeasure(keras.losses.Loss):
 		name: str
 			Name of the loss function.
 	"""
+	
 	def __init__(
 			self,
 			max_val: int = 1,
@@ -71,6 +72,7 @@ class VisionLoss(keras.losses.Loss):
 			The weight of the SSIM term.
 		name:
 	"""
+	
 	def __init__(
 			self,
 			lambda_mse: float = 5,
@@ -92,22 +94,3 @@ class VisionLoss(keras.losses.Loss):
 			"lambda_ssim": self.lambda_ssim,
 			"name": self.name
 		}
-
-
-def get_ground_truth_predictions(y_true, y_pred, threshold):
-	y_true_np = np.squeeze(y_true.numpy())
-	y_pred_np = np.squeeze(y_pred.numpy())
-	_, ssim_residual_mask = sk_ssim(
-		y_true_np,
-		y_pred_np,
-		data_range=1,
-		channel_axis=-1,
-		gaussian_weights=True,
-		full=True,
-		use_sample_covariance=False,
-		sigma=1.5
-	)
-	gt_pred = np.zeros(shape=ssim_residual_mask.shape)
-	gt_pred[(1 - ssim_residual_mask) > threshold] = 1
-	gt_pred = tf.convert_to_tensor(gt_pred, dtype=tf.float32)
-	return gt_pred

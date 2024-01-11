@@ -1,5 +1,5 @@
 import tensorflow as tf
-import keras_core as keras
+import keras
 
 from typing import Union, Optional
 

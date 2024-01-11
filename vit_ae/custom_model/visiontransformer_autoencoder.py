@@ -3,7 +3,7 @@ import keras
 
 from tensorflow.image import ssim
 
-from vit_ae.custom_model.visiontransformer_layers import PatchEmbedding, VisionTransformerBlock, get_decoder
+from vit_ae.custom_model.visiontransformer_layers import PatchEmbedding
 from vit_ae.model_utilities.loss_metric_utilities import VisionLoss
 
 
@@ -141,8 +141,8 @@ class VisionTransformerAutoencoder(keras.Model):
 			{
 				"embed_dim": self.embed_dim,
 				"patch_size": self.patch_size,
-				"encoder": self.encoder,
-				"decoder": self.decoder,
+				"encoder":  keras.saving.serialize_keras_object(self.encoder),
+				"decoder":  keras.saving.serialize_keras_object(self.decoder),
 				"img_height": self.img_height,
 				"img_width": self.img_width,
 				"num_register": self.num_register,

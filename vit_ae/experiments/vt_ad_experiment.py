@@ -3,7 +3,7 @@ import os
 import tensorflow as tf
 import click
 import mlflow
-import keras_core as keras
+import keras
 
 from vit_ae.train.train_utilities import create_optimizer, create_model
 from vit_ae.preprocess.preprocess_utilities import get_image_files, get_train_val_split, DataGenerator
@@ -31,24 +31,38 @@ OBJECT_NAMES = [
 
 
 @click.command()
-@click.option("--source_path", required=True, type=click.Path(exists=True, file_okay=False),
-              help="Path to the MVTEC AD dataset")
+@click.option(
+	"--source_path",
+	required=True,
+	type=click.Path(exists=True, file_okay=False),
+	help="Path to the MVTEC AD dataset"
+)
 @click.option("--data_objects", default="bottle", type=click.Choice(OBJECT_NAMES), help="Objects which are used.")
 @click.option("--val_split", default=None, type=click.FLOAT, help="Validation split.")
 @click.option("--epochs", default=1, type=click.INT, help="Number of epochs.")
 @click.option("--embed_dim", default=512, type=click.INT, help="Embedding Dimension.")
 @click.option("--num_heads", default=4, type=click.INT, help="Number of heads used in Attention of the ViTBlocks.")
-@click.option("--hidden_unit", "-unit", default=(32, 32, 32), multiple=True, type=click.INT, help="Number of units used in ViTBlocks.")
+@click.option(
+	"--hidden_unit",
+	"-unit",
+	default=(32, 32, 32),
+	multiple=True,
+	type=click.INT,
+	help="Number of units used in ViTBlocks."
+)
 @click.option("--img_height", default=512, type=click.INT)
 @click.option("--img_width", default=512, type=click.INT)
 @click.option("--patch_size", default=16, type=click.INT, help="Size of the patches.")
 @click.option("--num_register", default=None, type=click.INT, help="Number of registers")
 @click.option("--batch_size", default=32, type=click.INT)
-@click.option("--optimizer", default="adam",
-              type=click.Choice(OPTIMIZER_OPTIONS))
+@click.option(
+	"--optimizer",
+	default="adam",
+	type=click.Choice(OPTIMIZER_OPTIONS)
+)
 @click.option("--lr_rate", default=0.001, type=float)
 def perform_train_run(source_path, data_objects, val_split, epochs, embed_dim, num_heads, hidden_unit, img_height,
-                      img_width, patch_size, num_register, batch_size, optimizer, lr_rate, ):
+                      img_width, patch_size, num_register, batch_size, optimizer, lr_rate) -> object:
 	AUTOTUNE = tf.data.AUTOTUNE
 	hidden_units = list(hidden_unit)
 	train_image_files = get_image_files(source_path, data_objects, training=True)
